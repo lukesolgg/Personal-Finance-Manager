@@ -1,27 +1,39 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./styles/globals.css";
+"use client";
+
+import React from 'react';
+import { Provider } from 'react-redux';
+import { store } from './store';
+import Navbar from './components/Navbar';
+import Header from './components/Header';
 import ClientLayout from './ClientLayout';
+import Footer from './components/Footer';
+import './styles/globals.css';
+import { usePathname } from 'next/navigation';
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-});
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
 
-export const metadata: Metadata = {
-  title: 'Personal Finance Manager',
-  description: 'Track your income, expenses, and manage your budget.',
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`}>
-        <ClientLayout>{children}</ClientLayout>
+      <body className="min-h-screen flex flex-col">
+        <Provider store={store}>
+          <Header />
+          <ClientLayout>
+            {pathname !== '/settings' ? (
+              <div className="flex flex-1">
+                <Navbar />
+                <main className="flex-1 overflow-y-auto p-4">
+                  {children}
+                </main>
+              </div>
+            ) : (
+              <main className="flex-1 overflow-y-auto p-4">
+                {children}
+              </main>
+            )}
+          </ClientLayout>
+          <Footer />
+        </Provider>
       </body>
     </html>
   );
