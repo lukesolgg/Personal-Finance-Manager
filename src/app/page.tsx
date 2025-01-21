@@ -1,12 +1,9 @@
-'use client'; // Assuming this page might need client-side hooks
+import dynamic from 'next/dynamic';
 
-import React from 'react';
-import Dashboard from "./components/Dashboard";
+const Dashboard = dynamic(() => import('./components/Dashboard'));
 
-const Page = () => {
+export default function Page() {
   return (
     <Dashboard />
   );
-};
-
-export default Page;
+}

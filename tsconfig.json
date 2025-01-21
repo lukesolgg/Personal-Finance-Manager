@@ -7,6 +7,9 @@
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
+    "typeRoots": ["./node_modules/@types"],
+    "types": ["node"],
+    "baseUrl": ".",
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
@@ -25,3 +28,4 @@
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules", "src/app/components/Layout.tsx"] // explicitly exclude the removed file
 }
+

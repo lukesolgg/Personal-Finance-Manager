@@ -1,23 +1,40 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { registerUser } from '../store/reducers/userSlice';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const dispatch = useDispatch();
+  const router = useRouter();
 
-  const handleRegister = (event: React.FormEvent) => {
+  const handleRegister = async (event: React.FormEvent) => {
     event.preventDefault();
     if (password !== confirmPassword) {
       alert('Passwords do not match');
       return;
     }
-    dispatch(registerUser({ email, password }));
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, username, password }),
+      });
+      if (response.ok) {
+        router.push('/login');
+      } else {
+        const errorData = await response.json();
+        alert('Error registering user: ' + (errorData.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('An error occurred:', error);
+      alert('An error occurred while registering. Please try again.');
+    }
   };
 
   return (
@@ -35,6 +52,19 @@ const Register: React.FC = () => {
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
+              Username
+            </label>
+            <input 
+              type="text"
+              id="username"
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
             />
           </div>

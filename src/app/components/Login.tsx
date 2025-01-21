@@ -2,17 +2,36 @@
 
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { login } from '../store/reducers/userSlice'; // Adjust path as needed
+import { login } from '../store/reducers/userSlice';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
+  const router = useRouter(); // Use useRouter hook
 
-  const handleLogin = (event: React.FormEvent) => {
+  const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
-    dispatch(login({ email, password }));
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        dispatch(login({ email, password }));
+        router.push('/'); // Use router.push for navigation
+      } else {
+        console.error('Login failed');
+      }
+    } catch (error) {
+      console.error('An error occurred:', error);
+    }
   };
 
   return (

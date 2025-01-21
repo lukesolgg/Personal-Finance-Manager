@@ -1,12 +1,13 @@
-import React from 'react';
-import Layout from '../components/Layout';
-import Dashboard from '../components/Dashboard';
+// src/app/page.tsx
+import dynamic from 'next/dynamic';
+
+const Dashboard = dynamic(() => import('../components/Dashboard'));
 
 const Home: React.FC = () => {
   return (
-    <Layout>
+    <>
       <Dashboard />
-    </Layout>
+    </>
   );
 };
 

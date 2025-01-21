@@ -1,39 +1,31 @@
-"use client";
-
 import React from 'react';
-import { Provider } from 'react-redux';
-import { store } from './store';
-import Navbar from './components/Navbar';
-import Header from './components/Header';
-import ClientLayout from './ClientLayout';
-import Footer from './components/Footer';
+import { cookies } from 'next/headers';
+import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import './styles/globals.css';
-import { usePathname } from 'next/navigation';
+import Footer from './components/Footer';
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+// Client components for dynamic behavior
+const DynamicHeader = dynamic(() => import('./components/Header'));
+const DynamicClientLayout = dynamic(() => import('./components/ClientLayout'));
+const DynamicProvider = dynamic(() => import('./components/ReduxProvider'));
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const isLoggedIn = (await cookies()).has('userId'); // Server-side logic
 
   return (
     <html lang="en">
       <body className="min-h-screen flex flex-col">
-        <Provider store={store}>
-          <Header />
-          <ClientLayout>
-            {pathname !== '/settings' ? (
-              <div className="flex flex-1">
-                <Navbar />
-                <main className="flex-1 overflow-y-auto p-4">
-                  {children}
-                </main>
-              </div>
-            ) : (
-              <main className="flex-1 overflow-y-auto p-4">
-                {children}
-              </main>
-            )}
-          </ClientLayout>
+        
+
+        {/* Client-side logic */}
+        <DynamicProvider>
+          <DynamicHeader />
+          <DynamicClientLayout>
+            {children}
+          </DynamicClientLayout>
           <Footer />
-        </Provider>
+        </DynamicProvider>
       </body>
     </html>
   );

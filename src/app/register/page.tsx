@@ -1,5 +1,12 @@
-import Register from '../components/Register';
+import dynamic from 'next/dynamic';
+
+const Register = dynamic(() => import('../components/Register'));
 
 export default function RegisterPage() {
-  return <Register />;
+  return (
+    <>
+      {/* Any server-rendered content */}
+      <Register />
+    </>
+  );
 }
