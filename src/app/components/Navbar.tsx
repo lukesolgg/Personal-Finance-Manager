@@ -2,34 +2,53 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { FaHome, FaFileInvoice, FaMoneyBillAlt, FaCog } from 'react-icons/fa';
-import { useDispatch } from 'react-redux';
-import { setView } from '../store/reducers/userSlice';
+import { 
+  FaHome, 
+  FaFileInvoice, 
+  FaMoneyBillAlt, 
+  FaPiggyBank,
+  FaChartLine,
+  FaCog 
+} from 'react-icons/fa';
+import { useDispatch, useSelector } from 'react-redux';
+import { setView, logout } from '../store/reducers/userSlice';
+import { RootState } from '../store';
 
 const Navbar: React.FC = () => {
   const dispatch = useDispatch();
+  const currentView = useSelector((state: RootState) => state.user.currentView);
 
-  const handleSetView = (view: 'dashboard' | 'transactions' | 'budget') => {
+  const handleViewChange = (view: string) => {
     dispatch(setView(view));
   };
+  
+  const navItems = [
+    { name: 'Dashboard', view: 'dashboard', icon: <FaHome /> },
+    { name: 'Transactions', view: 'transactions', icon: <FaFileInvoice /> },
+    { name: 'Budget', view: 'budget', icon: <FaMoneyBillAlt /> },
+    { name: 'Savings', view: 'savings', icon: <FaPiggyBank /> },
+    { name: 'Investments', view: 'investments', icon: <FaChartLine /> },
+  ];
 
   return (
     <aside className="w-64 bg-white shadow h-full">
       <div className="p-4">
         <h2 className="text-xl font-bold text-gray-800">Finance Manager</h2>
         <nav className="mt-10">
-          <button onClick={() => handleSetView('dashboard')} className="flex items-center py-2 px-4 text-gray-600 hover:bg-gray-200 w-full text-left">
-            <FaHome className="mr-2"/>
-            Dashboard
-          </button>
-          <button onClick={() => handleSetView('transactions')} className="flex items-center py-2 px-4 text-gray-600 hover:bg-gray-200 w-full text-left">
-            <FaFileInvoice className="mr-2"/>
-            Transactions
-          </button>
-          <button onClick={() => handleSetView('budget')} className="flex items-center py-2 px-4 text-gray-600 hover:bg-gray-200 w-full text-left">
-            <FaMoneyBillAlt className="mr-2"/>
-            Budget
-          </button>
+          {navItems.map((item) => (
+            <button
+              key={item.view}
+              onClick={() => handleViewChange(item.view)}
+              className={`flex items-center py-2 px-4 w-full text-left ${
+                currentView === item.view 
+                  ? 'bg-blue-100 text-blue-600' 
+                  : 'text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {item.icon}
+              <span className="ml-2">{item.name}</span>
+            </button>
+          ))}
           <Link href="/settings" className="flex items-center py-2 px-4 text-gray-600 hover:bg-gray-200 w-full text-left">
             <FaCog className="mr-2"/>
             Settings

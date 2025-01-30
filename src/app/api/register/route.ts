@@ -1,33 +1,63 @@
-import { NextRequest, NextResponse } from 'next/server';
-import db from '../../store/db'; // Adjust path if necessary
+import { NextResponse } from 'next/server';
+import mysql from 'mysql2/promise';
+import bcrypt from 'bcryptjs';
 
-export async function POST(request: NextRequest) {
-  const { username, email, password } = await request.json();
-  // In production, hash the password before storing
-  const hashedPassword = password; // Use bcrypt or similar in real scenarios
+const pool = mysql.createPool({
+  host: process.env.MYSQL_HOST,
+  port: parseInt(process.env.MYSQL_PORT || '3306'),
+  user: process.env.MYSQL_USER || 'finance_user',
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE || 'finance_app',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
 
+export async function POST(request: Request) {
+  let connection;
   try {
-    await new Promise((resolve, reject) => {
-      db.run(`INSERT INTO users (username, email, password) VALUES (?, ?, ?)`, 
-      [username, email, hashedPassword], 
-      function(err) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(this.lastID);
-        }
-      });
-    });
-    return NextResponse.json({ message: 'User registered successfully' }, { status: 201 });
+    const { username, email, password } = await request.json();
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Get connection from pool
+    connection = await pool.getConnection();
+    console.log('Database connected successfully');
+
+    // Check if user exists
+    const [existing]: any = await connection.execute(
+      'SELECT * FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (existing.length > 0) {
+      return NextResponse.json(
+        { error: 'Email already registered' },
+        { status: 409 }
+      );
+    }
+
+    // Insert new user
+    const [result]: any = await connection.execute(
+      'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
+      [username, email, hashedPassword]
+    );
+
+    return NextResponse.json({
+      message: 'Registration successful',
+      userId: result.insertId
+    }, { status: 201 });
+
   } catch (error) {
     console.error('Database error:', error);
-    
-    // Type guard to check if error is an instance of Error
-    let errorMessage = 'An unknown error occurred';
-    if (error instanceof Error) {
-      errorMessage = error.message;
+    return NextResponse.json(
+      { error: 'Registration failed' },
+      { status: 500 }
+    );
+  } finally {
+    if (connection) {
+      connection.release();
     }
-    
-    return NextResponse.json({ message: 'Error registering user', error: errorMessage }, { status: 500 });
   }
 }

@@ -1,88 +1,133 @@
-"use client";
+'use client';
 
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store';
-import Transactions from './Transactions';
-import Budget from './Budget';
-import { FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import type { AppDispatch, RootState } from '../store/store';
 
-const Dashboard: React.FC = () => {
-  const { currentView } = useSelector((state: RootState) => state.user);
+interface Transaction {
+  id: number;
+  amount: number;
+  type: 'income' | 'expense';
+  description: string;
+  date: string;
+}
 
-  let content;
-  switch (currentView) {
-    case 'transactions':
-      content = <Transactions />;
-      break;
-    case 'budget':
-      content = <Budget />;
-      break;
-    default:
-      content = (
-        <div className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {['Income', 'Spending', 'Savings', 'Investment'].map((category, index) => (
-              <div key={index} className="bg-white shadow rounded p-4">
-                <h3 className="text-lg font-bold">{category}</h3>
-                <div className="text-2xl font-bold">£{index === 0 ? '1,422' : index === 1 ? '900' : index === 2 ? '522' : '1,000'}</div>
-                <div className="text-green-600 flex items-center mt-2">
-                  {category === 'Spending' ? <FaArrowDown /> : <FaArrowUp />} 
-                  <span className="ml-1">{(index * 2.1).toFixed(1)}%</span>
-                </div>
-                <div className="text-sm">
-                  {category === 'Spending' ? '-' : '+'}{index * 113} than last month
-                </div>
-              </div>
-            ))}
-          </div>
+interface SavingsAccount {
+  id: number;
+  name: string;
+  current_amount: number;
+}
 
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="bg-white shadow rounded p-4 flex-1">
-              <h3 className="text-lg font-bold mb-4">Statistics</h3>
-              {/* Here you would implement or import a chart component, e.g., using react-chartjs-2 or recharts */}
-              <div className="w-full h-64 bg-gray-200">Income vs Expenses Chart Placeholder</div>
-            </div>
-            <div className="bg-white shadow rounded p-4 flex-1">
-              <h3 className="text-lg font-bold mb-4">Savings & Investments</h3>
-              <ul className="space-y-2">
-                {[1, 2, 3, 4, 5].map((item) => (
-                  <li key={item} className="flex justify-between">
-                    <span>Bitcoin</span>
-                    <span>£4,555 / £10,000</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+interface Investment {
+  id: number;
+  name: string;
+  amount: number;
+}
 
-          <div className="mt-8 bg-white shadow rounded p-4">
-            <h3 className="text-lg font-bold mb-4">Recent Transactions</h3>
-            <table className="w-full">
-              <tbody>
-                {[1, 2, 3, 4, 5].map((item) => (
-                  <tr key={item} className="border-b">
-                    <td className="p-2">Transaction {item}</td>
-                    <td className="p-2 text-right">£50.00</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <button 
-              onClick={() => {/* Redirect to Transactions component */}}
-              className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-            >
-              View More
-            </button>
-          </div>
-        </div>
-      );
+interface DashboardFinanceState {
+  transactions: Transaction[];
+  savings: SavingsAccount[];
+  investments: Investment[];
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
+  error: string | null;
+}
+
+const Dashboard = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const finance = useSelector((state: RootState) => state.finance) as unknown as DashboardFinanceState;
+  const { transactions = [], savings = [], investments = [], status, error } = finance;
+  const userId = useSelector((state: RootState) => state.user.id);
+
+  const calculateTotals = () => {
+    const income = transactions
+      .filter((t: Transaction) => t.type === 'income')
+      .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
+      
+    const spending = transactions
+      .filter((t: Transaction) => t.type === 'expense')
+      .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
+
+    const savingsTotal = savings
+      .reduce((sum: number, s: SavingsAccount) => sum + s.current_amount, 0);
+    
+    const investmentsTotal = investments
+      .reduce((sum: number, i: Investment) => sum + i.amount, 0);
+
+    return { income, spending, savings: savingsTotal, investments: investmentsTotal };
+  };
+
+  if (status === 'loading') {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      </div>
+    );
   }
 
+  if (error) {
+    return (
+      <div className="p-4 bg-red-100 text-red-700 rounded">
+        Error: {error}
+      </div>
+    );
+  }
+
+  const totals = calculateTotals();
+
   return (
-    <main className="flex-1 overflow-y-auto p-4 bg-gray-100">
-      {content}
-    </main>
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold mb-8">Financial Dashboard</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-gray-500 text-sm">Total Income</h3>
+          <p className="text-2xl font-bold text-green-600">
+            ${totals.income.toFixed(2)}
+          </p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-gray-500 text-sm">Total Spending</h3>
+          <p className="text-2xl font-bold text-red-600">
+            ${totals.spending.toFixed(2)}
+          </p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-gray-500 text-sm">Total Savings</h3>
+          <p className="text-2xl font-bold text-blue-600">
+            ${totals.savings.toFixed(2)}
+          </p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-gray-500 text-sm">Total Investments</h3>
+          <p className="text-2xl font-bold text-purple-600">
+            ${totals.investments.toFixed(2)}
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6 border-b">
+          <h2 className="text-xl font-semibold">Recent Transactions</h2>
+        </div>
+        <div className="divide-y">
+          {transactions.slice(0, 5).map((transaction: Transaction) => (
+            <div key={transaction.id} className="p-4 flex justify-between items-center">
+              <div>
+                <p className="font-medium">{transaction.description}</p>
+                <p className="text-sm text-gray-500">
+                  {new Date(transaction.date).toLocaleDateString()}
+                </p>
+              </div>
+              <span className={`font-medium ${
+                transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+              }`}>
+                ${transaction.amount.toFixed(2)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -1,46 +1,38 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface UserState {
-  isLoggedIn: boolean;
-  username: string;
-  email?: string;
-  currentView: 'dashboard' | 'transactions' | 'budget';
+  email: string | null;
+  id: number | null;
+  isAuthenticated: boolean;
+  currentView: string;
 }
 
 const initialState: UserState = {
-  isLoggedIn: false,
-  username: '',
-  email: '',
-  currentView: 'dashboard',
+  email: null,
+  id: null,
+  isAuthenticated: false,
+  currentView: 'dashboard'
 };
 
-export const userSlice = createSlice({
+const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    login: (state, action: PayloadAction<{ email: string, password: string }>) => {
-      state.isLoggedIn = true;
+    setUser: (state, action: PayloadAction<{ email: string; id: number }>) => {
       state.email = action.payload.email;
-      state.username = action.payload.email.split('@')[0];
+      state.id = action.payload.id;
+      state.isAuthenticated = true;
     },
     logout: (state) => {
-      state.isLoggedIn = false;
-      state.username = '';
-      state.email = '';
-      state.currentView = 'dashboard';
+      state.email = null;
+      state.id = null;
+      state.isAuthenticated = false;
     },
-    registerUser: (state, action: PayloadAction<{ email: string, password: string }>) => {
-      localStorage.setItem('user', JSON.stringify({ email: action.payload.email, isLoggedIn: true }));
-      state.isLoggedIn = true;
-      state.email = action.payload.email;
-      state.username = action.payload.email.split('@')[0];
-    },
-    setView: (state, action: PayloadAction<'dashboard' | 'transactions' | 'budget'>) => {
+    setView: (state, action: PayloadAction<string>) => {
       state.currentView = action.payload;
-    },
-  },
+    }
+  }
 });
 
-export const { login, logout, registerUser, setView } = userSlice.actions;
-
+export const { setUser, logout, setView } = userSlice.actions;
 export default userSlice.reducer;

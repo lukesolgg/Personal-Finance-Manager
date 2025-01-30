@@ -1,52 +1,96 @@
-import React from 'react';
-
-// Placeholder for Pie Chart - you'd use a real charting library here
-const PieChartPlaceholder = () => (
-  <div className="w-full h-64 bg-gray-200 flex justify-center items-center">
-    <div>Pie Chart Placeholder</div>
-  </div>
-);
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '../store';
+import { fetchFinanceData } from '../store/reducers/financeSlice';
+import axios from 'axios';
+import type { Budget as BudgetType } from '../types/index'; // Renamed import
 
 const Budget: React.FC = () => {
-  const categories = [
-    { name: 'Food', spent: 300, budget: 500 },
-    { name: 'Housing', spent: 1200, budget: 1200 },
-    { name: 'Transportation', spent: 200, budget: 300 },
-    { name: 'Savings', spent: 200, budget: 500 },
-    { name: 'Debt Repayment', spent: 150, budget: 200 },
-    { name: 'Giving', spent: 50, budget: 100 },
-    { name: 'Miscellaneous', spent: 100, budget: 200 },
-  ];
+  const dispatch = useDispatch<AppDispatch>();
+  // Fixed finance slice access
+  const { budgets } = useSelector((state: RootState) => state.finance as FinanceState);
+  const userId = useSelector((state: RootState) => state.user.userId);
+  const [editingBudget, setEditingBudget] = useState<string | null>(null);
+  const [newAmount, setNewAmount] = useState('');
+
+  const handleUpdateBudget = async (category: string) => {
+    if (!userId) {
+      console.error('User ID not found');
+      return;
+    }
+
+    try {
+      await axios.put('/api/budgets', {
+        userId,
+        category,
+        amount: parseFloat(newAmount)
+      });
+      dispatch(fetchFinanceData(userId));
+      setEditingBudget(null);
+      setNewAmount('');
+    } catch (error) {
+      console.error('Budget update error:', error);
+    }
+  };
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Budget</h2>
+      <h2 className="text-2xl font-bold mb-4">Budget Management</h2>
       
-      {/* Pie Chart Section */}
-      <div className="bg-white shadow rounded p-4 mb-4">
-        <h3 className="text-lg font-bold mb-2">Budget Allocation</h3>
-        <PieChartPlaceholder />
-      </div>
-
-      {/* How you're doing this month section */}
       <div className="bg-white shadow rounded p-4">
-        <h3 className="text-lg font-bold mb-2">How you're doing this month</h3>
         <table className="w-full">
           <thead>
             <tr className="border-b">
               <th className="text-left p-2">Category</th>
+              <th className="text-right p-2">Allocated</th>
               <th className="text-right p-2">Spent</th>
-              <th className="text-right p-2">Budget</th>
               <th className="text-right p-2">Remaining</th>
+              <th className="text-right p-2">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {categories.map((category, index) => (
+            {budgets.map((budget: BudgetType, index: number) => (
               <tr key={index} className="border-b">
-                <td className="p-2">{category.name}</td>
-                <td className="text-right p-2">£{category.spent.toFixed(2)}</td>
-                <td className="text-right p-2">£{category.budget.toFixed(2)}</td>
-                <td className="text-right p-2">£{(category.budget - category.spent).toFixed(2)}</td>
+                <td className="p-2">{budget.category}</td>
+                <td className="text-right p-2">
+                  {editingBudget === budget.category ? (
+                    <input
+                      type="number"
+                      value={newAmount}
+                      onChange={(e) => setNewAmount(e.target.value)}
+                      className="w-24 text-right border rounded py-1 px-2"
+                      placeholder={budget.amount.toString()}
+                    />
+                  ) : (
+                    `£${budget.amount.toFixed(2)}`
+                  )}
+                </td>
+                <td className="text-right p-2">
+                  £{(budget as any).spent?.toFixed(2) || '0.00'}
+                </td>
+                <td className="text-right p-2">
+                  £{(budget.amount - ((budget as any).spent || 0)).toFixed(2)}
+                </td>
+                <td className="text-right p-2">
+                  {editingBudget === budget.category ? (
+                    <button
+                      onClick={() => handleUpdateBudget(budget.category)}
+                      className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                    >
+                      Save
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setEditingBudget(budget.category);
+                        setNewAmount(budget.amount.toString());
+                      }}
+                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

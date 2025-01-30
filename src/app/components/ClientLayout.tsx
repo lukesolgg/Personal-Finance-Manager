@@ -1,28 +1,18 @@
 'use client';
 
-import React from 'react';
-import { usePathname } from 'next/navigation';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../store';
 import Navbar from './Navbar';
 
-const ClientLayout = ({ children }: { children: React.ReactNode }) => {
-  const pathname = usePathname();
-
+export default function ClientLayout({ children }: { children: React.ReactNode }) {
+  const currentView = useSelector((state: RootState) => state.user.currentView);
+  
   return (
-    <>
-      {pathname !== '/settings' ? (
-        <div className="flex flex-1">
-          <Navbar />
-          <main className="flex-1 overflow-y-auto p-4">
-            {children}
-          </main>
-        </div>
-      ) : (
-        <main className="flex-1 overflow-y-auto p-4">
-          {children}
-        </main>
-      )}
-    </>
+    <div>
+      <Navbar />
+      <main>
+        {children}
+      </main>
+    </div>
   );
-};
-
-export default ClientLayout;
+}

@@ -1,32 +1,26 @@
 import db from '../store/db';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.status(405).json({ message: 'Method Not Allowed' });
-    return;
-  }
-
-  const { username, email, password } = req.body;
-  
-  // In a real application, you would hash the password
-  const hashedPassword = password; // Placeholder - use bcrypt or similar
-  
-  try {
-    const result = await new Promise((resolve, reject) => {
-      db.run(`INSERT INTO users (username, email, password) VALUES (?, ?, ?)`, 
-      [username, email, hashedPassword], 
-      function(err) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(this.lastID);
-        }
-      });
-    });
+  if (req.method === 'POST') {
+    const { username, email, password } = req.body;
     
-    res.status(201).json({ message: 'User registered successfully', userId: result });
-  } catch (error) {
-    console.error('Database error:', error);
-    res.status(500).json({ message: 'Error registering user', error: error.message });
+    try {
+      const [result] = await db.query(
+        'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
+        [username, email, password]
+      );
+
+      if (result.affectedRows === 1) {
+        return res.status(201).json({ message: 'User registered successfully' });
+      }
+      return res.status(400).json({ message: 'Registration failed' });
+    } catch (error) {
+      console.error('Registration error:', error);
+      return res.status(500).json({ 
+        message: 'Error registering user',
+        error: error.message
+      });
+    }
   }
+  return res.status(405).end(`Method ${req.method} Not Allowed`);
 }
