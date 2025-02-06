@@ -3,6 +3,12 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../store/store';
+import dynamic from 'next/dynamic';
+
+const TransactionsView = dynamic(
+  () => import('../components/TransactionsView'),
+  { ssr: false }
+);
 
 interface Transaction {
   id: number;
@@ -34,9 +40,11 @@ interface DashboardFinanceState {
 
 const Dashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const currentView = useSelector((state: RootState) => state.user.currentView);
   const finance = useSelector((state: RootState) => state.finance) as unknown as DashboardFinanceState;
   const { transactions = [], savings = [], investments = [], status, error } = finance;
   const userId = useSelector((state: RootState) => state.user.id);
+  console.log('Current view in Dashboard:', currentView)
 
   const calculateTotals = () => {
     const income = transactions
@@ -71,11 +79,11 @@ const Dashboard = () => {
       </div>
     );
   }
-
+  const renderDashboardView = () => {
   const totals = calculateTotals();
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <>
       <h1 className="text-3xl font-bold mb-8">Financial Dashboard</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -127,8 +135,31 @@ const Dashboard = () => {
           ))}
         </div>
       </div>
-    </div>
+    </>
   );
+};
+
+const renderView = () => {
+  console.log('Rendering view:', currentView); // Debug log
+  switch (currentView) {
+    case 'transactions':
+      return <TransactionsView />;
+    case 'dashboard':
+      return renderDashboardView();
+    case 'savings':
+      return <div>Savings View Coming Soon</div>;
+    case 'investments':
+      return <div>Investments View Coming Soon</div>;
+    default:
+      return renderDashboardView();
+  }
+};
+
+return (
+  <div className="p-6 max-w-7xl mx-auto">
+    {renderView()}
+  </div>
+);
 };
 
 export default Dashboard;

@@ -1,10 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+type ViewType = 'dashboard' | 'transactions' | 'savings' | 'investments';
+
 interface UserState {
   id: number | null;
   email: string | null;
   isAuthenticated: boolean;
-  currentView: string;
+  currentView: ViewType;
 }
 
 const initialState: UserState = {
@@ -14,7 +16,7 @@ const initialState: UserState = {
   currentView: 'dashboard'
 };
 
-export const userSlice = createSlice({
+const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
@@ -23,7 +25,7 @@ export const userSlice = createSlice({
       state.email = action.payload.email;
       state.isAuthenticated = true;
     },
-    setView: (state, action: PayloadAction<string>) => {
+    setView: (state, action: PayloadAction<ViewType>) => {
       state.currentView = action.payload;
     },
     logout: (state) => {
