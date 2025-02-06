@@ -11,7 +11,7 @@ import {
   FaCog 
 } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
-import { setView, logout } from '../store/reducers/userSlice';
+import { setView } from '../store/reducers/userSlice';
 import { RootState } from '../store';
 
 const Navbar: React.FC = () => {

@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 import { ReactNode } from 'react'
 import { Provider } from 'react-redux'
 import { store } from '../store/store'
-import ProtectedRoute from './ProtectedRoute'
+import { usePathname } from 'next/navigation'
 
 const DynamicHeader = dynamic(() => import('./Header'))
 const DynamicNavbar = dynamic(() => import('./Navbar'))
@@ -15,21 +15,22 @@ interface ClientWrapperProps {
 }
 
 export default function ClientWrapper({ children, isLoggedIn }: ClientWrapperProps) {
+  const pathname = usePathname()
+  const isAuthPage = pathname === '/login' || pathname === '/register'
+
   return (
     <Provider store={store}>
-      {isLoggedIn ? (
-        <ProtectedRoute>
-          <div>
+      <div className="min-h-screen flex flex-col">
+        {!isAuthPage && isLoggedIn && (
+          <>
             <DynamicHeader />
             <DynamicNavbar />
-            <main>
-              {children}
-            </main>
-          </div>
-        </ProtectedRoute>
-      ) : (
-        children
-      )}
+          </>
+        )}
+        <main className="flex-grow">
+          {children}
+        </main>
+      </div>
     </Provider>
   )
 }
